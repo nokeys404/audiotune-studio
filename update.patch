@@ -1,0 +1,18 @@
+--- app/src/main/java/com/audiotune/studio/presentation/equalizer/EqualizerScreen.kt
++++ app/src/main/java/com/audiotune/studio/presentation/equalizer/EqualizerScreen.kt
+@@ -306,12 +306,12 @@
+                 // Simplified visualization
+                 var totalGain = 0f
+                 val fraction = x / width
+-                val freq = 20f * kotlin.math.exp(fraction * kotlin.math.ln(20000f/20f))
++                val freq = 20f * kotlin.math.exp(fraction * kotlin.math.ln(20000f/20f).toFloat())
+                 
+                 for (band in bands) {
+                     if (band.isEnabled) {
+-                        val distance = kotlin.math.abs(kotlin.math.ln(freq / band.frequencyHz))
+-                        val influence = kotlin.math.max(0.0, 1.0 - (distance * band.q * 0.5)).toFloat()
++                        val distance = kotlin.math.abs(kotlin.math.ln(freq / band.frequencyHz.toDouble()).toFloat())
++                        val influence = kotlin.math.max(0f, 1f - (distance * band.q * 0.5f))
+                         totalGain += band.gainDb * influence
+                     }
+                 }

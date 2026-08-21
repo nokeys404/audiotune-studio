@@ -4,6 +4,8 @@ import com.audiotune.studio.audio.dsp.DspPipeline
 import com.audiotune.studio.audio.dsp.eq.ParametricEqProcessor
 import com.audiotune.studio.audio.dsp.dynamics.CompressorProcessor
 import com.audiotune.studio.audio.dsp.dynamics.LimiterProcessor
+import com.audiotune.studio.audio.dsp.dynamics.NoiseGateProcessor
+import com.audiotune.studio.audio.dsp.dynamics.ExpanderProcessor
 import java.nio.ByteBuffer
 
 /**
@@ -33,6 +35,13 @@ import java.nio.ByteBuffer
  */
 class AudioEngine {
     val dspPipeline = DspPipeline()
+
+    private val noiseGateProcessor = NoiseGateProcessor()
+    val noiseGateController = NoiseGateController(noiseGateProcessor)
+
+    private val expanderProcessor = ExpanderProcessor()
+    val expanderController = ExpanderController(expanderProcessor)
+
     private val eqProcessor = ParametricEqProcessor()
     val eqController = EqController(eqProcessor)
 
@@ -43,6 +52,8 @@ class AudioEngine {
     val limiterController = LimiterController(limiterProcessor)
 
     init {
+        dspPipeline.addProcessor(noiseGateProcessor)
+        dspPipeline.addProcessor(expanderProcessor)
         dspPipeline.addProcessor(eqProcessor)
         dspPipeline.addProcessor(compressorProcessor)
         dspPipeline.addProcessor(limiterProcessor)

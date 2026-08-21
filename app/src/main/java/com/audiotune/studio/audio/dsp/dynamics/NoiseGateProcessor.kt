@@ -9,20 +9,21 @@ import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.pow
 
-class CompressorProcessor(
-    override val id: String = "compressor",
+class NoiseGateProcessor(
+    override val id: String = "noise_gate",
     private var sampleRate: Float = 48000f,
     private var channels: Int = 2
 ) : DspProcessor {
     override var isEnabled: Boolean = true
 
-    var thresholdDb: Float = -20f
-    var ratio: Float = 4f
-    var attackMs: Float = 10f
+    var thresholdDb: Float = -40f
+    var attackMs: Float = 5f
+    var holdMs: Float = 50f
     var releaseMs: Float = 100f
-    var makeupGainDb: Float = 0f
+    var rangeDb: Float = -80f
 
-    private var env: Float = 0f
+    private var currentGain: Float = 1f
+    private var holdSamplesRemaining: Int = 0
     private var floatBuffer = FloatArray(0)
 
     override fun configure(sampleRate: Float, channels: Int) {
@@ -40,14 +41,12 @@ class CompressorProcessor(
             floatBuffer = FloatArray(numSamples)
         }
 
-        // Convert PCM 16-bit to Float [-1.0, 1.0]
         for (i in 0 until numSamples) {
             floatBuffer[i] = shortBuffer.get(i).toFloat() / 32768f
         }
 
         processFloat(floatBuffer, numSamples)
 
-        // Convert Float back to PCM 16-bit
         for (i in 0 until numSamples) {
             var sample = floatBuffer[i] * 32768f
             if (sample > 32767f) sample = 32767f
@@ -59,9 +58,10 @@ class CompressorProcessor(
     }
 
     private fun processFloat(buffer: FloatArray, length: Int) {
+        val rangeLinear = 10.0.pow(rangeDb / 20.0).toFloat()
         val alphaA = exp(-1.0 / (sampleRate * (attackMs.coerceAtLeast(0.1f)) / 1000.0)).toFloat()
-        val alphaR = exp(-1.0 / (sampleRate * (releaseMs.coerceAtLeast(1.0f)) / 1000.0)).toFloat()
-        val makeupLinear = 10.0.pow(makeupGainDb / 20.0).toFloat()
+        val alphaR = exp(-1.0 / (sampleRate * (releaseMs.coerceAtLeast(0.1f)) / 1000.0)).toFloat()
+        val holdSamplesTotal = (sampleRate * holdMs / 1000.0).toInt()
 
         if (channels == 2) {
             var i = 0
@@ -69,49 +69,66 @@ class CompressorProcessor(
                 val l = buffer[i]
                 val r = buffer[i + 1]
                 val maxAbs = max(abs(l), abs(r))
+                
+                val xDb = if (maxAbs > 1e-6f) 20f * log10(maxAbs) else -120f
 
-                env = if (maxAbs > env) {
-                    alphaA * env + (1f - alphaA) * maxAbs
+                var targetGain = 1f
+                if (xDb >= thresholdDb) {
+                    holdSamplesRemaining = holdSamplesTotal
+                    targetGain = 1f
                 } else {
-                    alphaR * env + (1f - alphaR) * maxAbs
+                    if (holdSamplesRemaining > 0) {
+                        holdSamplesRemaining--
+                        targetGain = 1f
+                    } else {
+                        targetGain = rangeLinear
+                    }
                 }
 
-                val envDb = if (env > 1e-6f) 20f * log10(env) else -120f
-                var gainDb = 0f
-                if (envDb > thresholdDb) {
-                    gainDb = (thresholdDb - envDb) * (1f - 1f / ratio)
+                if (targetGain > currentGain) {
+                    currentGain = alphaA * currentGain + (1f - alphaA) * targetGain
+                } else {
+                    currentGain = alphaR * currentGain + (1f - alphaR) * targetGain
                 }
 
-                val linearGain = (10.0.pow(gainDb / 20.0).toFloat()) * makeupLinear
-                buffer[i] = l * linearGain
-                buffer[i + 1] = r * linearGain
+                buffer[i] = l * currentGain
+                buffer[i + 1] = r * currentGain
                 i += 2
             }
         } else if (channels == 1) {
             for (i in 0 until length) {
                 val x = buffer[i]
                 val absX = abs(x)
+                
+                val xDb = if (absX > 1e-6f) 20f * log10(absX) else -120f
 
-                env = if (absX > env) {
-                    alphaA * env + (1f - alphaA) * absX
+                var targetGain = 1f
+                if (xDb >= thresholdDb) {
+                    holdSamplesRemaining = holdSamplesTotal
+                    targetGain = 1f
                 } else {
-                    alphaR * env + (1f - alphaR) * absX
+                    if (holdSamplesRemaining > 0) {
+                        holdSamplesRemaining--
+                        targetGain = 1f
+                    } else {
+                        targetGain = rangeLinear
+                    }
                 }
 
-                val envDb = if (env > 1e-6f) 20f * log10(env) else -120f
-                var gainDb = 0f
-                if (envDb > thresholdDb) {
-                    gainDb = (thresholdDb - envDb) * (1f - 1f / ratio)
+                if (targetGain > currentGain) {
+                    currentGain = alphaA * currentGain + (1f - alphaA) * targetGain
+                } else {
+                    currentGain = alphaR * currentGain + (1f - alphaR) * targetGain
                 }
 
-                val linearGain = (10.0.pow(gainDb / 20.0).toFloat()) * makeupLinear
-                buffer[i] = x * linearGain
+                buffer[i] = x * currentGain
             }
         }
     }
 
     override fun flush() {
-        env = 0f
+        currentGain = 1f
+        holdSamplesRemaining = 0
     }
 
     override fun release() {}

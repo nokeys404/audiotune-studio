@@ -77,6 +77,8 @@ class Media3AudioProcessorAdapter(
         buffer = AudioProcessor.EMPTY_BUFFER
         pendingAudioFormat = AudioFormat.NOT_SET
         activeAudioFormat = AudioFormat.NOT_SET
-        audioEngine.release()
+        // AudioEngine is a shared singleton owned by AppContainer.
+        // Do NOT release it from the Media3 processor adapter.
+        // The application lifecycle owns the AudioEngine lifetime.
     }
 }

@@ -14,43 +14,83 @@ data class PipelineState(
  * Orchestrates a sequential chain of DspProcessors.
  */
 class DspPipeline : AudioProcessor {
-    private val processors = mutableListOf<DspProcessor>()
+
+    companion object {
+        // Explicitly defined order of DSP processing
+        val EXPECTED_ORDER = listOf(
+            "noise_gate",
+            "expander",
+            "parametric_eq",
+            "compressor",
+            "limiter"
+        )
+    }
+
+    private val processorsMap = mutableMapOf<String, DspProcessor>()
+    
+    @Volatile
+    private var orderedProcessors = emptyArray<DspProcessor>()
+
     private val _pipelineState = MutableStateFlow(PipelineState())
     val pipelineState: StateFlow<PipelineState> = _pipelineState.asStateFlow()
 
     @Synchronized
     fun addProcessor(processor: DspProcessor) {
-        processors.add(processor)
+        processorsMap[processor.id] = processor
+        rebuildArray()
         updateState()
     }
 
     @Synchronized
     fun removeProcessor(processorId: String) {
-        processors.removeAll { it.id == processorId }
+        processorsMap.remove(processorId)
+        rebuildArray()
         updateState()
     }
 
     @Synchronized
     fun setProcessorEnabled(processorId: String, enabled: Boolean) {
-        processors.find { it.id == processorId }?.isEnabled = enabled
+        processorsMap[processorId]?.isEnabled = enabled
         updateState()
     }
 
     @Synchronized
     fun clear() {
-        processors.clear()
+        processorsMap.clear()
+        rebuildArray()
         updateState()
     }
 
     @Synchronized
     fun configure(sampleRate: Float, channels: Int) {
-        processors.forEach { it.configure(sampleRate, channels) }
+        // Configure using the deterministic ordered array
+        val procs = orderedProcessors
+        for (i in procs.indices) {
+            procs[i].configure(sampleRate, channels)
+        }
     }
 
-    @Synchronized
+    private fun rebuildArray() {
+        val list = mutableListOf<DspProcessor>()
+        // Add known processors in explicit order
+        for (id in EXPECTED_ORDER) {
+            processorsMap[id]?.let { list.add(it) }
+        }
+        // Add any unknown processors at the end
+        for ((id, processor) in processorsMap) {
+            if (id !in EXPECTED_ORDER) {
+                list.add(processor)
+            }
+        }
+        orderedProcessors = list.toTypedArray()
+    }
+
+    // No @Synchronized here to avoid blocking real-time audio thread
     override fun process(inputBuffer: ByteBuffer): ByteBuffer {
         var currentBuffer = inputBuffer
-        for (processor in processors) {
+        val procs = orderedProcessors
+        for (i in procs.indices) {
+            val processor = procs[i]
             if (processor.isEnabled) {
                 currentBuffer = processor.process(currentBuffer)
             }
@@ -60,19 +100,25 @@ class DspPipeline : AudioProcessor {
 
     @Synchronized
     override fun flush() {
-        processors.forEach { it.flush() }
+        val procs = orderedProcessors
+        for (i in procs.indices) {
+            procs[i].flush()
+        }
     }
 
     @Synchronized
     override fun release() {
-        processors.forEach { it.release() }
+        val procs = orderedProcessors
+        for (i in procs.indices) {
+            procs[i].release()
+        }
         clear()
     }
 
     private fun updateState() {
         _pipelineState.value = PipelineState(
-            processorIds = processors.map { it.id },
-            enabledMap = processors.associate { it.id to it.isEnabled }
+            processorIds = orderedProcessors.map { it.id },
+            enabledMap = processorsMap.mapValues { it.value.isEnabled }
         )
     }
 }

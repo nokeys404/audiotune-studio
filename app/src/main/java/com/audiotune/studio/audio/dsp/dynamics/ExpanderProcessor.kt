@@ -5,17 +5,20 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.pow
 
-class LimiterProcessor(
-    override val id: String = "limiter",
+class ExpanderProcessor(
+    override val id: String = "expander",
     private var sampleRate: Float = 48000f,
     private var channels: Int = 2
 ) : DspProcessor {
     override var isEnabled: Boolean = true
 
-    var ceilingDb: Float = -0.1f
+    var thresholdDb: Float = -40f
+    var ratio: Float = 2f
+    var attackMs: Float = 5f
     var releaseMs: Float = 50f
 
     private var env: Float = 0f
@@ -53,9 +56,8 @@ class LimiterProcessor(
     }
 
     private fun processFloat(buffer: FloatArray, length: Int) {
-        // Limiter has 0 attack time (instant). So alphaA = 0.
-        val alphaR = exp(-1.0 / (sampleRate * (releaseMs.coerceAtLeast(1.0f)) / 1000.0)).toFloat()
-        val ceilingLinear = 10.0.pow(ceilingDb / 20.0).toFloat()
+        val alphaA = exp(-1.0 / (sampleRate * (attackMs.coerceAtLeast(0.1f)) / 1000.0)).toFloat()
+        val alphaR = exp(-1.0 / (sampleRate * (releaseMs.coerceAtLeast(0.1f)) / 1000.0)).toFloat()
 
         if (channels == 2) {
             var i = 0
@@ -64,17 +66,21 @@ class LimiterProcessor(
                 val r = buffer[i + 1]
                 val maxAbs = max(abs(l), abs(r))
 
-                // Instant attack
-                env = if (maxAbs > env) maxAbs else alphaR * env + (1f - alphaR) * maxAbs
-
-                val gain = if (env > ceilingLinear && env > 1e-6f) {
-                    ceilingLinear / env
+                env = if (maxAbs > env) {
+                    alphaA * env + (1f - alphaA) * maxAbs
                 } else {
-                    1f
+                    alphaR * env + (1f - alphaR) * maxAbs
                 }
 
-                buffer[i] = l * gain
-                buffer[i + 1] = r * gain
+                val envDb = if (env > 1e-6f) 20f * log10(env) else -120f
+                var gainDb = 0f
+                if (envDb < thresholdDb) {
+                    gainDb = (envDb - thresholdDb) * (ratio - 1f)
+                }
+
+                val linearGain = 10.0.pow(gainDb / 20.0).toFloat()
+                buffer[i] = l * linearGain
+                buffer[i + 1] = r * linearGain
                 i += 2
             }
         } else if (channels == 1) {
@@ -82,15 +88,20 @@ class LimiterProcessor(
                 val x = buffer[i]
                 val absX = abs(x)
 
-                env = if (absX > env) absX else alphaR * env + (1f - alphaR) * absX
-
-                val gain = if (env > ceilingLinear && env > 1e-6f) {
-                    ceilingLinear / env
+                env = if (absX > env) {
+                    alphaA * env + (1f - alphaA) * absX
                 } else {
-                    1f
+                    alphaR * env + (1f - alphaR) * absX
                 }
 
-                buffer[i] = x * gain
+                val envDb = if (env > 1e-6f) 20f * log10(env) else -120f
+                var gainDb = 0f
+                if (envDb < thresholdDb) {
+                    gainDb = (envDb - thresholdDb) * (ratio - 1f)
+                }
+
+                val linearGain = 10.0.pow(gainDb / 20.0).toFloat()
+                buffer[i] = x * linearGain
             }
         }
     }
