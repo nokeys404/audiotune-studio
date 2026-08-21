@@ -35,7 +35,15 @@ fun AudioTuneNavHost(
         }
 
         composable(Screen.Music.route) {
-            MusicScreen()
+            MusicScreen(
+                onNavigateToPlayer = {
+                    navController.navigate(Screen.Player.route)
+                }
+            )
+        }
+
+        composable(Screen.Player.route) {
+            com.audiotune.studio.presentation.player.PlayerScreen()
         }
 
         composable(Screen.Equalizer.route) {

@@ -47,6 +47,13 @@ sealed class Screen(
         unselectedIcon = Icons.Outlined.Settings
     )
 
+    data object Player : Screen(
+        route = "player",
+        title = "Player",
+        selectedIcon = Icons.Filled.LibraryMusic,
+        unselectedIcon = Icons.Outlined.LibraryMusic
+    )
+
     companion object {
         val bottomNavItems = listOf(Home, Music, Equalizer, Settings)
     }

@@ -2,10 +2,12 @@ package com.audiotune.studio.playback
 
 import com.audiotune.studio.domain.model.Track
 
-sealed class PlaybackState {
-    data object Idle : PlaybackState()
-    data class Playing(val track: Track, val positionMs: Long) : PlaybackState()
-    data class Paused(val track: Track, val positionMs: Long) : PlaybackState()
-    data class Buffering(val track: Track) : PlaybackState()
-    data class Error(val message: String) : PlaybackState()
-}
+data class PlaybackState(
+    val currentTrack: Track? = null,
+    val isPlaying: Boolean = false,
+    val playbackPositionMs: Long = 0L,
+    val durationMs: Long = 0L,
+    val shuffleModeEnabled: Boolean = false,
+    val repeatMode: Int = 0 // 0: Off, 1: One, 2: All
+)
+
