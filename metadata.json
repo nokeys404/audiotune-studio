@@ -1,0 +1,6 @@
+{
+  "name": "AudioTune Studio",
+  "description": "Modern dark Material 3 audio production and music tuning studio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

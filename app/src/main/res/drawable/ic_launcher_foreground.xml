@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Equalizer bars and soundwave studio icon -->
+    <!-- Bar 1 (Left) -->
+    <path
+        android:pathData="M34,42 L34,66"
+        android:strokeWidth="4"
+        android:strokeColor="#00E5FF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M34,48 L34,54"
+        android:strokeWidth="7"
+        android:strokeColor="#00E5FF"
+        android:strokeLineCap="round" />
+
+    <!-- Bar 2 (Mid-Left) -->
+    <path
+        android:pathData="M44,32 L44,76"
+        android:strokeWidth="4"
+        android:strokeColor="#38BDF8"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M44,62 L44,68"
+        android:strokeWidth="7"
+        android:strokeColor="#38BDF8"
+        android:strokeLineCap="round" />
+
+    <!-- Bar 3 (Center - Highest) -->
+    <path
+        android:pathData="M54,24 L54,84"
+        android:strokeWidth="4"
+        android:strokeColor="#A855F7"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,38 L54,44"
+        android:strokeWidth="7"
+        android:strokeColor="#C084FC"
+        android:strokeLineCap="round" />
+
+    <!-- Bar 4 (Mid-Right) -->
+    <path
+        android:pathData="M64,30 L64,78"
+        android:strokeWidth="4"
+        android:strokeColor="#EC4899"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M64,52 L64,58"
+        android:strokeWidth="7"
+        android:strokeColor="#F472B6"
+        android:strokeLineCap="round" />
+
+    <!-- Bar 5 (Right) -->
+    <path
+        android:pathData="M74,40 L74,68"
+        android:strokeWidth="4"
+        android:strokeColor="#00E5FF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M74,46 L74,52"
+        android:strokeWidth="7"
+        android:strokeColor="#00E5FF"
+        android:strokeLineCap="round" />
+
+</vector>
