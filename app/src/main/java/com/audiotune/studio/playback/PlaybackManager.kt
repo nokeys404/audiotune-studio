@@ -8,11 +8,13 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.audiotune.studio.domain.model.Track
+import com.audiotune.studio.domain.repository.AudioRepository
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +23,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class PlaybackManager(private val context: Context) {
+class PlaybackManager(
+    private val context: Context,
+    private val audioRepository: AudioRepository
+) {
     private val _playbackState = MutableStateFlow(PlaybackState())
     val playbackState: StateFlow<PlaybackState> = _playbackState.asStateFlow()
 
@@ -50,6 +55,11 @@ class PlaybackManager(private val context: Context) {
     private val playerListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             updateState()
+            mediaItem?.mediaId?.let { trackId ->
+                scope.launch {
+                    audioRepository.markTrackAsPlayed(trackId, System.currentTimeMillis())
+                }
+            }
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -191,7 +201,9 @@ class PlaybackManager(private val context: Context) {
     }
 
     fun release() {
+        mediaController?.removeListener(playerListener)
         controllerFuture?.let { MediaController.releaseFuture(it) }
         progressJob?.cancel()
+        scope.cancel()
     }
 }

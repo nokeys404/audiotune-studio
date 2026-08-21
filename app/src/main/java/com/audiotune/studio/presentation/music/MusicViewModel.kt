@@ -45,13 +45,17 @@ class MusicViewModel(
         viewModelScope.launch {
             val context = getApplication<Application>()
             val newTracks = uris.mapNotNull { uri ->
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (e: SecurityException) {
+                    // Ignore
+                }
                 createTrackFromUri(context, uri)
             }
             if (newTracks.isNotEmpty()) {
-                val currentTracks = _uiState.value.tracks.toMutableList()
-                currentTracks.addAll(0, newTracks)
-                // In a real app we would save to repository/database here.
-                _uiState.update { it.copy(tracks = currentTracks) }
                 // Persist new tracks to database
                 newTracks.forEach { track ->
                     audioRepository.saveTrackToHistory(track)

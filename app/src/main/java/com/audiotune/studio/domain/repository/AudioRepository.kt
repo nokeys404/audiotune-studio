@@ -9,5 +9,6 @@ interface AudioRepository {
     fun getLibraryTracks(): Flow<List<Track>>
     fun getPresets(): Flow<List<AudioPreset>>
     suspend fun saveTrackToHistory(track: Track)
+    suspend fun markTrackAsPlayed(trackId: String, timestamp: Long)
     suspend fun savePreset(preset: AudioPreset)
 }

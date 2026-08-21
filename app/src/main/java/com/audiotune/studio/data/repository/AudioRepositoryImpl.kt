@@ -15,54 +15,6 @@ class AudioRepositoryImpl(
     private val trackDao: TrackDao? = null
 ) : AudioRepository {
 
-    // Seed sample tracks for Studio display
-    private val initialSampleTracks = listOf(
-        Track(
-            id = "demo_1",
-            title = "Midnight Odyssey (Acoustic Master)",
-            artist = "Aura Synthetics",
-            album = "Neon Horizon",
-            durationMs = 234000L,
-            sampleRate = 96000,
-            bitRateKbps = 1411,
-            format = "FLAC 24-bit",
-            playedAt = System.currentTimeMillis() - 1000 * 60 * 12
-        ),
-        Track(
-            id = "demo_2",
-            title = "Quantum Echoes",
-            artist = "SubLow Collective",
-            album = "Frequency Domain",
-            durationMs = 198000L,
-            sampleRate = 48000,
-            bitRateKbps = 320,
-            format = "WAV 32-bit",
-            playedAt = System.currentTimeMillis() - 1000 * 60 * 45
-        ),
-        Track(
-            id = "demo_3",
-            title = "Solar Flare Groove",
-            artist = "Analog Dreamer",
-            album = "Tape Warmth Vol. 3",
-            durationMs = 312000L,
-            sampleRate = 48000,
-            bitRateKbps = 320,
-            format = "FLAC",
-            playedAt = System.currentTimeMillis() - 1000 * 60 * 180
-        ),
-        Track(
-            id = "demo_4",
-            title = "Hyperdrive Transit",
-            artist = "Veloce Beats",
-            album = "Modular Sessions",
-            durationMs = 175000L,
-            sampleRate = 44100,
-            bitRateKbps = 256,
-            format = "MP3",
-            playedAt = System.currentTimeMillis() - 1000 * 60 * 360
-        )
-    )
-
     private val initialPresets = listOf(
         AudioPreset(
             id = "preset_studio_flat",
@@ -119,18 +71,14 @@ class AudioRepositoryImpl(
 
     override fun getRecentlyPlayedTracks(): Flow<List<Track>> {
         return trackDao?.getRecentlyPlayed()?.map { entities ->
-            if (entities.isEmpty()) {
-                initialSampleTracks
-            } else {
-                entities.map { it.toDomain() }
-            }
-        } ?: flowOf(initialSampleTracks)
+            entities.map { it.toDomain() }
+        } ?: flowOf(emptyList())
     }
 
     override fun getLibraryTracks(): Flow<List<Track>> {
         return trackDao?.getAllTracks()?.map { entities ->
-            if (entities.isEmpty()) initialSampleTracks else entities.map { it.toDomain() }
-        } ?: flowOf(initialSampleTracks)
+            entities.map { it.toDomain() }
+        } ?: flowOf(emptyList())
     }
 
     override fun getPresets(): Flow<List<AudioPreset>> {
@@ -139,6 +87,10 @@ class AudioRepositoryImpl(
 
     override suspend fun saveTrackToHistory(track: Track) {
         trackDao?.insertTrack(track.toEntity())
+    }
+
+    override suspend fun markTrackAsPlayed(trackId: String, timestamp: Long) {
+        trackDao?.updatePlayedAt(trackId, timestamp)
     }
 
     override suspend fun savePreset(preset: AudioPreset) {

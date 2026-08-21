@@ -10,5 +10,5 @@ data class Track(
     val sampleRate: Int = 48000,
     val bitRateKbps: Int = 320,
     val format: String = "FLAC",
-    val playedAt: Long = System.currentTimeMillis()
+    val playedAt: Long = 0L
 )

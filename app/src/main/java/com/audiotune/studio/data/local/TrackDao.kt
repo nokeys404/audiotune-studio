@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TrackDao {
-    @Query("SELECT * FROM tracks ORDER BY playedAt DESC LIMIT 20")
+    @Query("SELECT * FROM tracks WHERE playedAt > 0 ORDER BY playedAt DESC LIMIT 20")
     fun getRecentlyPlayed(): Flow<List<TrackEntity>>
 
     @Query("SELECT * FROM tracks ORDER BY title ASC")
@@ -16,4 +16,7 @@ interface TrackDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrack(track: TrackEntity)
+
+    @Query("UPDATE tracks SET playedAt = :timestamp WHERE id = :trackId")
+    suspend fun updatePlayedAt(trackId: String, timestamp: Long)
 }

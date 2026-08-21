@@ -17,6 +17,6 @@ object AppContainer {
         application = app
         val database = AudioTuneDatabase.getInstance(app)
         audioRepository = AudioRepositoryImpl(database.trackDao())
-        playbackManager = PlaybackManager(app)
+        playbackManager = PlaybackManager(app, audioRepository)
     }
 }
