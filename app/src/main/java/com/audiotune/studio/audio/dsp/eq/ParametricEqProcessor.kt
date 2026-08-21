@@ -51,8 +51,8 @@ class ParametricEqProcessor(
     override fun process(inputBuffer: ByteBuffer): ByteBuffer {
         if (!isEnabled) return inputBuffer
         
-        // Convert ByteBuffer (16-bit PCM little endian) to FloatArray
-        val shortBuffer = inputBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+        // Convert ByteBuffer (16-bit PCM native order) to FloatArray
+        val shortBuffer = inputBuffer.order(ByteOrder.nativeOrder()).asShortBuffer()
         val numSamples = shortBuffer.remaining()
         
         if (floatBuffer.size < numSamples) {

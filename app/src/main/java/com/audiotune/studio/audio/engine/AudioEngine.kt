@@ -2,6 +2,8 @@ package com.audiotune.studio.audio.engine
 
 import com.audiotune.studio.audio.dsp.DspPipeline
 import com.audiotune.studio.audio.dsp.eq.ParametricEqProcessor
+import com.audiotune.studio.audio.dsp.dynamics.CompressorProcessor
+import com.audiotune.studio.audio.dsp.dynamics.LimiterProcessor
 import java.nio.ByteBuffer
 
 /**
@@ -34,8 +36,16 @@ class AudioEngine {
     private val eqProcessor = ParametricEqProcessor()
     val eqController = EqController(eqProcessor)
 
+    private val compressorProcessor = CompressorProcessor()
+    val compressorController = CompressorController(compressorProcessor)
+
+    private val limiterProcessor = LimiterProcessor()
+    val limiterController = LimiterController(limiterProcessor)
+
     init {
         dspPipeline.addProcessor(eqProcessor)
+        dspPipeline.addProcessor(compressorProcessor)
+        dspPipeline.addProcessor(limiterProcessor)
     }
 
     fun configure(sampleRate: Float, channels: Int) {
