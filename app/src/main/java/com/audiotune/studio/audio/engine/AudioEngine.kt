@@ -1,6 +1,7 @@
 package com.audiotune.studio.audio.engine
 
 import com.audiotune.studio.audio.dsp.DspPipeline
+import com.audiotune.studio.audio.dsp.eq.ParametricEqProcessor
 import java.nio.ByteBuffer
 
 /**
@@ -30,6 +31,16 @@ import java.nio.ByteBuffer
  */
 class AudioEngine {
     val dspPipeline = DspPipeline()
+    private val eqProcessor = ParametricEqProcessor()
+    val eqController = EqController(eqProcessor)
+
+    init {
+        dspPipeline.addProcessor(eqProcessor)
+    }
+
+    fun configure(sampleRate: Float, channels: Int) {
+        dspPipeline.configure(sampleRate, channels)
+    }
 
     fun processAudio(inputBuffer: ByteBuffer): ByteBuffer {
         return dspPipeline.process(inputBuffer)

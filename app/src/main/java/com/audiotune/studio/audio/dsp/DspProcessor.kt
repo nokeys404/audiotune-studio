@@ -6,4 +6,5 @@ package com.audiotune.studio.audio.dsp
 interface DspProcessor : AudioProcessor {
     val id: String
     var isEnabled: Boolean
+    fun configure(sampleRate: Float, channels: Int)
 }

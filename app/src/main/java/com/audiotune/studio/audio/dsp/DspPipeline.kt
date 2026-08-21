@@ -43,6 +43,11 @@ class DspPipeline : AudioProcessor {
     }
 
     @Synchronized
+    fun configure(sampleRate: Float, channels: Int) {
+        processors.forEach { it.configure(sampleRate, channels) }
+    }
+
+    @Synchronized
     override fun process(inputBuffer: ByteBuffer): ByteBuffer {
         var currentBuffer = inputBuffer
         for (processor in processors) {

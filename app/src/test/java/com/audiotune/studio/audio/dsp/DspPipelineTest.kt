@@ -15,6 +15,8 @@ class DspPipelineTest {
         var flushCalled = false
         var releaseCalled = false
 
+        override fun configure(sampleRate: Float, channels: Int) {}
+
         override fun process(inputBuffer: ByteBuffer): ByteBuffer {
             val capacity = inputBuffer.capacity()
             val outputBuffer = ByteBuffer.allocate(capacity)
