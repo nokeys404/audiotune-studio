@@ -13,7 +13,7 @@ class LimiterProcessor(
     private var sampleRate: Float = 48000f,
     private var channels: Int = 2
 ) : DspProcessor {
-    override var isEnabled: Boolean = true
+    override var isEnabled: Boolean = false
 
     var ceilingDb: Float = -0.1f
     var releaseMs: Float = 50f

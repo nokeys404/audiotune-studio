@@ -14,7 +14,7 @@ class ExpanderProcessor(
     private var sampleRate: Float = 48000f,
     private var channels: Int = 2
 ) : DspProcessor {
-    override var isEnabled: Boolean = true
+    override var isEnabled: Boolean = false
 
     var thresholdDb: Float = -40f
     var ratio: Float = 2f
